@@ -57,6 +57,8 @@ import android.view.TextureView;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.CompoundButton;
+import android.widget.FrameLayout;
+import android.widget.ImageView;
 import android.widget.NumberPicker;
 import android.widget.ToggleButton;
 import android.widget.TextView;
@@ -75,6 +77,8 @@ public class Camera2BasicFragment extends Fragment
     implements FragmentCompat.OnRequestPermissionsResultCallback {
 
   /** Tag for the {@link Log}. */
+  private int nowHeight;
+  private int nowWidth;
   private static final String TAG = "butcher2";
   private static final String FRAGMENT_DIALOG = "dialog";
   private static final String HANDLE_THREAD_NAME = "CameraBackground";
@@ -91,6 +95,7 @@ public class Camera2BasicFragment extends Fragment
   private AutoFitTextureView textureView;
   private TextView textView;
   private DrawView drawView;
+  private ImageView personImg;
   private ViewGroup layoutBottom;
   private ImageClassifier classifier;
 
@@ -260,7 +265,7 @@ public class Camera2BasicFragment extends Fragment
     textView = view.findViewById(R.id.text);
     layoutFrame = view.findViewById(R.id.layout_frame);
     drawView = view.findViewById(R.id.drawview);
-    layoutBottom = view.findViewById(R.id.layout_bottom);
+    personImg = view.findViewById(R.id.person_frame);
 
   }
 
@@ -461,18 +466,34 @@ public class Camera2BasicFragment extends Fragment
                 maxPreviewHeight,
                 largest);
 
-        // We fit the aspect ratio of TextureView to the size of preview we picked.
+
+        Log.e("preview size: ", "width: "+ previewSize.getWidth()+"+ height"+ previewSize.getHeight());
+          // We fit the aspect ratio of TextureView to the size of preview we picked.
+        nowHeight= previewSize.getHeight();
+        nowWidth = previewSize.getWidth();
+
         int orientation = getResources().getConfiguration().orientation;
-        if (orientation == Configuration.ORIENTATION_LANDSCAPE) {
-          layoutFrame.setAspectRatio(previewSize.getWidth(), previewSize.getHeight());
-          textureView.setAspectRatio(previewSize.getWidth(), previewSize.getHeight());
-          drawView.setAspectRatio(previewSize.getWidth(), previewSize.getHeight());
-        } else {
-           layoutFrame.setAspectRatio(previewSize.getHeight(), previewSize.getWidth());
-           textureView.setAspectRatio(previewSize.getHeight(), previewSize.getWidth());
-           drawView.setAspectRatio(previewSize.getHeight(), previewSize.getWidth());
+        if (orientation != Configuration.ORIENTATION_LANDSCAPE) {
+            nowHeight= previewSize.getWidth();
+            nowWidth = previewSize.getHeight();
+        }
+        layoutFrame.setAspectRatio(nowWidth, nowHeight);
+        textureView.setAspectRatio(nowWidth, nowHeight);
+        drawView.setAspectRatio(nowWidth, nowHeight);
+
+//        이미지 사이즈 조절 하기
+        FrameLayout.LayoutParams params = (FrameLayout.LayoutParams) personImg.getLayoutParams();
+        params.width = nowWidth;
+        params.height = nowHeight;
+        if (0 != nowWidth && 0 != nowHeight) {
+          if (nowWidth < nowHeight * nowWidth / nowHeight) {
+                params.height = width * nowHeight / nowWidth;
+          } else {
+            params.width = height * nowWidth / nowHeight;
+          }
         }
 
+        personImg.setLayoutParams(params);
         this.cameraId = cameraId;
         return;
       }
@@ -502,7 +523,8 @@ public class Camera2BasicFragment extends Fragment
       if (!cameraOpenCloseLock.tryAcquire(2500, TimeUnit.MILLISECONDS)) {
         throw new RuntimeException("Time out waiting to lock camera opening.");
       }
-      manager.openCamera(cameraId, stateCallback, backgroundHandler);
+//      1-> 전면 카메라, 0->후면 카메라
+      manager.openCamera("1", stateCallback, backgroundHandler);
     } catch (CameraAccessException e) {
       Log.e(TAG, "Failed to open Camera", e);
     } catch (InterruptedException e) {
