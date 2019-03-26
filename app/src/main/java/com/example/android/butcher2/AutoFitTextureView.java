@@ -18,6 +18,7 @@ package com.example.android.butcher2;
 
 import android.content.Context;
 import android.util.AttributeSet;
+import android.util.Log;
 import android.view.TextureView;
 
 /**
@@ -63,12 +64,15 @@ public class AutoFitTextureView extends TextureView {
     super.onMeasure(widthMeasureSpec, heightMeasureSpec);
     final int width = MeasureSpec.getSize(widthMeasureSpec);
     final int height = MeasureSpec.getSize(heightMeasureSpec);
+    Log.e("camera texture: ", width+" "+height);
     if (0 == ratioWidth || 0 == ratioHeight) {
       setMeasuredDimension(width, height);
     } else {
       if (width < height * ratioWidth / ratioHeight) {
+        Log.e("camera Priview size1 texture: ", width+" "+width * ratioHeight / ratioWidth);
         setMeasuredDimension(width, width * ratioHeight / ratioWidth);
       } else {
+        Log.e("camera Priview size2 texture : ", height * ratioWidth / ratioHeight+" "+ height);
         setMeasuredDimension(height * ratioWidth / ratioHeight, height);
       }
     }
